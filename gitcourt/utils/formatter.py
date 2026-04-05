@@ -111,6 +111,15 @@ def print_score_bar(score: int):
     print(f"  {C.BOLD}Score: {score}/10{C.RESET}  [{bar}]  {color}{C.BOLD}{label}{C.RESET}")
 
 
+def _ensure_list(value):
+    """Ensure value is a list (LLM might return a string instead)."""
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str) and value:
+        return [value]
+    return []
+
+
 def print_verdict(verdict: dict):
     """Print the judge's verdict in a formatted way."""
     color = C.YELLOW
@@ -124,36 +133,41 @@ def print_verdict(verdict: dict):
         print()
 
     # Charges
-    if verdict.get("charges_upheld"):
+    charges_upheld = _ensure_list(verdict.get("charges_upheld"))
+    if charges_upheld:
         print(f"  {C.RED}Charges Upheld:{C.RESET}")
-        for charge in verdict["charges_upheld"]:
+        for charge in charges_upheld:
             print(f"    ❌ {charge}")
         print()
 
-    if verdict.get("charges_dismissed"):
+    charges_dismissed = _ensure_list(verdict.get("charges_dismissed"))
+    if charges_dismissed:
         print(f"  {C.GREEN}Charges Dismissed:{C.RESET}")
-        for charge in verdict["charges_dismissed"]:
+        for charge in charges_dismissed:
             print(f"    ✅ {charge}")
         print()
 
     # Required changes
-    if verdict.get("required_changes"):
+    required = _ensure_list(verdict.get("required_changes"))
+    if required:
         print(f"  {C.YELLOW}Required Before Merge:{C.RESET}")
-        for change in verdict["required_changes"]:
+        for change in required:
             print(f"    🔧 {change}")
         print()
 
     # Suggestions
-    if verdict.get("suggestions"):
+    suggestions = _ensure_list(verdict.get("suggestions"))
+    if suggestions:
         print(f"  {C.CYAN}Suggestions:{C.RESET}")
-        for sug in verdict["suggestions"]:
+        for sug in suggestions:
             print(f"    💡 {sug}")
         print()
 
     # Praise
-    if verdict.get("praise"):
+    praise = _ensure_list(verdict.get("praise"))
+    if praise:
         print(f"  {C.GREEN}Commendations:{C.RESET}")
-        for p in verdict["praise"]:
+        for p in praise:
             print(f"    🌟 {p}")
         print()
 

@@ -59,6 +59,7 @@ jobs:
           import json
           v = json.load(open('verdict.json'))
           charges = v.get('verdict',{}).get('charges_upheld',[])
+          if isinstance(charges, str): charges = [charges]
           for c in charges: print(f'- ❌ {c}')
           " 2>/dev/null || echo "")
 
@@ -66,6 +67,7 @@ jobs:
           import json
           v = json.load(open('verdict.json'))
           charges = v.get('verdict',{}).get('charges_dismissed',[])
+          if isinstance(charges, str): charges = [charges]
           for c in charges: print(f'- ✅ {c}')
           " 2>/dev/null || echo "")
 
@@ -73,6 +75,7 @@ jobs:
           import json
           v = json.load(open('verdict.json'))
           items = v.get('verdict',{}).get('required_changes',[])
+          if isinstance(items, str): items = [items]
           for i in items: print(f'- 🔧 {i}')
           " 2>/dev/null || echo "")
 
@@ -80,6 +83,7 @@ jobs:
           import json
           v = json.load(open('verdict.json'))
           items = v.get('verdict',{}).get('suggestions',[])
+          if isinstance(items, str): items = [items]
           for i in items: print(f'- 💡 {i}')
           " 2>/dev/null || echo "")
 
@@ -87,6 +91,7 @@ jobs:
           import json
           v = json.load(open('verdict.json'))
           items = v.get('verdict',{}).get('praise',[])
+          if isinstance(items, str): items = [items]
           for i in items: print(f'- 🌟 {i}')
           " 2>/dev/null || echo "")
 

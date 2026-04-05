@@ -71,6 +71,18 @@ class Judge:
 
     def parse_verdict(self, raw: str) -> dict:
         """Extract the JSON verdict from the judge's response."""
+        if not raw or not isinstance(raw, str):
+            return {
+                "score": 5,
+                "ruling": "The LLM returned no response.",
+                "charges_upheld": [],
+                "charges_dismissed": [],
+                "required_changes": [],
+                "suggestions": [],
+                "praise": [],
+                "sentence": "The court was unable to parse a structured verdict. The transcript speaks for itself.",
+            }
+
         # Try to find JSON code block first
         json_match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
         if json_match:

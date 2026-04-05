@@ -53,8 +53,13 @@ def fetch_pr_info(url: str) -> dict:
             "Check the URL or set GITHUB_TOKEN for private repos."
         )
     if resp.status_code == 403:
+        rate_remaining = resp.headers.get("X-RateLimit-Remaining", "")
+        if rate_remaining == "0":
+            raise ValueError(
+                "GitHub API rate limit exceeded. Set GITHUB_TOKEN for higher limits."
+            )
         raise ValueError(
-            "GitHub API rate limit exceeded. Set GITHUB_TOKEN for higher limits."
+            f"GitHub API access forbidden (403). The repo may be private — set GITHUB_TOKEN."
         )
     resp.raise_for_status()
 
@@ -93,6 +98,21 @@ def fetch_pr_diff(url: str) -> str:
         headers["Authorization"] = f"token {token}"
 
     resp = requests.get(api_url, headers=headers, timeout=60)
+
+    if resp.status_code == 404:
+        raise ValueError(
+            f"PR not found: {url}\n"
+            "Check the URL or set GITHUB_TOKEN for private repos."
+        )
+    if resp.status_code == 403:
+        rate_remaining = resp.headers.get("X-RateLimit-Remaining", "")
+        if rate_remaining == "0":
+            raise ValueError(
+                "GitHub API rate limit exceeded. Set GITHUB_TOKEN for higher limits."
+            )
+        raise ValueError(
+            f"GitHub API access forbidden (403). The repo may be private — set GITHUB_TOKEN."
+        )
     resp.raise_for_status()
 
     return resp.text

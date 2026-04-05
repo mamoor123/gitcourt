@@ -65,6 +65,11 @@ runs:
         python3 << 'SCRIPT'
         import json, os
 
+        def as_list(v):
+            if isinstance(v, list): return v
+            if isinstance(v, str) and v: return [v]
+            return []
+
         try:
             with open('verdict.json') as f:
                 data = json.load(f)
@@ -99,27 +104,31 @@ runs:
         if defense:
             lines.append(f"<details><summary>🔵 The Defense</summary>\n\n{defense[:1500]}\n\n</details>\n")
 
-        if v.get('charges_upheld'):
+        charges_upheld = as_list(v.get('charges_upheld'))
+        if charges_upheld:
             lines.append("### Charges Upheld")
-            for c in v['charges_upheld']:
+            for c in charges_upheld:
                 lines.append(f"- ❌ {c}")
             lines.append("")
 
-        if v.get('charges_dismissed'):
+        charges_dismissed = as_list(v.get('charges_dismissed'))
+        if charges_dismissed:
             lines.append("### Charges Dismissed")
-            for c in v['charges_dismissed']:
+            for c in charges_dismissed:
                 lines.append(f"- ✅ {c}")
             lines.append("")
 
-        if v.get('required_changes'):
+        required = as_list(v.get('required_changes'))
+        if required:
             lines.append("### Required Before Merge")
-            for c in v['required_changes']:
+            for c in required:
                 lines.append(f"- 🔧 {c}")
             lines.append("")
 
-        if v.get('suggestions'):
+        suggestions = as_list(v.get('suggestions'))
+        if suggestions:
             lines.append("### Suggestions")
-            for c in v['suggestions']:
+            for c in suggestions:
                 lines.append(f"- 💡 {c}")
             lines.append("")
 

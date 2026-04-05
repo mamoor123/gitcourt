@@ -25,10 +25,17 @@ from .utils.formatter import (
 
 
 def parse_args():
+    from . import __version__
+
     parser = argparse.ArgumentParser(
         description="GitCourt — AI Code Review Tribunal"
     )
     parser.add_argument("pr_url", help="GitHub Pull Request URL")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"gitcourt {__version__}",
+    )
     parser.add_argument(
         "--provider",
         choices=["openai", "ollama", "anthropic"],
@@ -181,6 +188,9 @@ def main():
         pr_diff = pr_diff[:max_diff_chars] + "\n\n... [diff truncated for analysis] ..."
         truncated = True
 
+    # Escape triple backticks in diff to prevent code fence injection
+    safe_diff = pr_diff.replace("```", "\\`\\`\\`")
+
     pr_context = f"""## PR Info
 - **Title:** {pr_info['title']}
 - **Author:** {pr_info['author']}
@@ -189,7 +199,7 @@ def main():
 
 ## Diff
 ```diff
-{pr_diff}
+{safe_diff}
 ```"""
 
     # === PROSECUTION ===
@@ -199,12 +209,20 @@ def main():
         print("🔴 THE PROSECUTION presents its case...\n")
         time.sleep(0.5)
 
-    prosecutor = Prosecutor()
-    prosecution = call_llm(
-        llm_config,
-        prosecutor.system_prompt(),
-        prosecutor.user_prompt(pr_context),
-    )
+    try:
+        prosecutor = Prosecutor()
+        prosecution = call_llm(
+            llm_config,
+            prosecutor.system_prompt(),
+            prosecutor.user_prompt(pr_context),
+        )
+    except Exception as e:
+        print(f"\n❌ LLM error during prosecution: {e}")
+        sys.exit(1)
+
+    if not prosecution:
+        print("\n❌ LLM returned empty response during prosecution.")
+        sys.exit(1)
 
     if not args.json_output:
         print_agent_argument("PROSECUTOR", "🔴", prosecution)
@@ -215,12 +233,20 @@ def main():
         print("🔵 THE DEFENSE presents its case...\n")
         time.sleep(0.5)
 
-    defender = Defender()
-    defense = call_llm(
-        llm_config,
-        defender.system_prompt(),
-        defender.user_prompt(pr_context, prosecution),
-    )
+    try:
+        defender = Defender()
+        defense = call_llm(
+            llm_config,
+            defender.system_prompt(),
+            defender.user_prompt(pr_context, prosecution),
+        )
+    except Exception as e:
+        print(f"\n❌ LLM error during defense: {e}")
+        sys.exit(1)
+
+    if not defense:
+        print("\n❌ LLM returned empty response during defense.")
+        sys.exit(1)
 
     if not args.json_output:
         print_agent_argument("DEFENDER", "🔵", defense)
@@ -231,12 +257,20 @@ def main():
         print("🟡 THE JUDGE deliberates...\n")
         time.sleep(0.5)
 
-    judge = Judge()
-    verdict_raw = call_llm(
-        llm_config,
-        judge.system_prompt(),
-        judge.user_prompt(pr_context, prosecution, defense),
-    )
+    try:
+        judge = Judge()
+        verdict_raw = call_llm(
+            llm_config,
+            judge.system_prompt(),
+            judge.user_prompt(pr_context, prosecution, defense),
+        )
+    except Exception as e:
+        print(f"\n❌ LLM error during verdict: {e}")
+        sys.exit(1)
+
+    if not verdict_raw:
+        print("\n❌ LLM returned empty response during verdict.")
+        sys.exit(1)
 
     # Parse verdict
     verdict = judge.parse_verdict(verdict_raw)

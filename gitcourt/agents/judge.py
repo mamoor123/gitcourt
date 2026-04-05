@@ -71,7 +71,7 @@ class Judge:
 
     def parse_verdict(self, raw: str) -> dict:
         """Extract the JSON verdict from the judge's response."""
-        # Try to find JSON code block
+        # Try to find JSON code block first
         json_match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
         if json_match:
             try:
@@ -79,13 +79,45 @@ class Judge:
             except json.JSONDecodeError:
                 pass
 
-        # Try to find any JSON object in the response
-        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", raw, re.DOTALL)
+        # Try to find ``` ... ``` without json tag
+        json_match = re.search(r"```\s*(\{.*?\})\s*```", raw, re.DOTALL)
         if json_match:
             try:
-                return json.loads(json_match.group(0))
+                return json.loads(json_match.group(1))
             except json.JSONDecodeError:
                 pass
+
+        # Try to find a JSON object by matching balanced braces
+        start = raw.find("{")
+        if start != -1:
+            depth = 0
+            in_string = False
+            escape = False
+            for i in range(start, len(raw)):
+                ch = raw[i]
+                if escape:
+                    escape = False
+                    continue
+                if ch == "\\":
+                    escape = True
+                    continue
+                if ch == '"' and not in_string:
+                    in_string = True
+                    continue
+                if ch == '"' and in_string:
+                    in_string = False
+                    continue
+                if in_string:
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            return json.loads(raw[start : i + 1])
+                        except json.JSONDecodeError:
+                            break
 
         # Fallback: return raw text as ruling
         return {

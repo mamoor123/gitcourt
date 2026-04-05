@@ -22,4 +22,4 @@ all = ["openai>=1.0.0", "anthropic>=0.18.0"]
 gitcourt = "gitcourt.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["gitcourt*"]
+include = ["gitcourt", "gitcourt.*"]

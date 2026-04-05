@@ -13,6 +13,10 @@ inputs:
     description: "OpenAI API key (required for openai provider)"
     required: false
     default: ""
+  anthropic-api-key:
+    description: "Anthropic API key (required for anthropic provider)"
+    required: false
+    default: ""
   provider:
     description: "LLM provider: openai, anthropic, ollama"
     required: false
@@ -42,11 +46,12 @@ runs:
       shell: bash
       env:
         OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
         MODEL_FLAG=""
         if [ -n "${{ inputs.model }}" ]; then
-          MODEL_FLAG="--model ${{ inputs.model }}"
+          MODEL_FLAG="--model '${{ inputs.model }}'"
         fi
         python -m gitcourt "${{ inputs.pr-url }}" \
           --provider "${{ inputs.provider }}" \

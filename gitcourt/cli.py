@@ -93,7 +93,8 @@ def build_llm_config(args) -> dict:
         if not config["api_key"]:
             print("❌ Error: OPENAI_API_KEY not set. Use --api-key or set the env var.")
             sys.exit(1)
-        config["base_url"] = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        config["base_url"] = base_url.rstrip("/")
 
     elif args.provider == "anthropic":
         config["api_key"] = args.api_key or os.getenv("ANTHROPIC_API_KEY")
@@ -102,7 +103,7 @@ def build_llm_config(args) -> dict:
             sys.exit(1)
 
     elif args.provider == "ollama":
-        config["ollama_url"] = args.ollama_url
+        config["ollama_url"] = args.ollama_url.rstrip("/")
 
     return config
 

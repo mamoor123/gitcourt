@@ -43,6 +43,7 @@ jobs:
       - uses: mamoor123/gitcourt@main
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          # anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}  # if using anthropic
 ```
 
 That's it. Every PR now gets a sticky comment with the verdict:
@@ -57,7 +58,7 @@ That's it. Every PR now gets a sticky comment with the verdict:
 
 ```bash
 # Install
-pip install git+https://github.com/mamoor123/gitcourt.git
+pip install "git+https://github.com/mamoor123/gitcourt.git#egg=gitcourt[all]"
 
 # Run with OpenAI
 export OPENAI_API_KEY="sk-..."

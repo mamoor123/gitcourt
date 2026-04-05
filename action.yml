@@ -42,13 +42,16 @@ runs:
       env:
         OPENAI_API_KEY: ${{ inputs.openai-api-key }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        MODEL: ${{ inputs.model }}
       run: |
-        python -m gitcourt.gitcourt "${{ inputs.pr-url }}" \
+        MODEL_FLAG=""
+        if [ -n "$MODEL" ]; then
+          MODEL_FLAG="--model $MODEL"
+        fi
+        python -m gitcourt "${{ inputs.pr-url }}" \
           --provider "${{ inputs.provider }}" \
-          ${MODEL:+--model "$MODEL"} \
+          $MODEL_FLAG \
           --json > verdict.json || true
-        env:
-          MODEL: ${{ inputs.model }}
 
     - name: Build comment
       shell: bash

@@ -1,8 +1,9 @@
 """GitHub PR fetcher — extracts diff and metadata from PR URLs."""
 
+import os
 import re
+
 import requests
-from typing import Optional
 
 
 def parse_pr_url(url: str) -> dict:
@@ -40,7 +41,6 @@ def fetch_pr_info(url: str) -> dict:
     }
 
     # Use auth token if available (higher rate limits)
-    import os
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     if token:
         headers["Authorization"] = f"token {token}"
@@ -88,7 +88,6 @@ def fetch_pr_diff(url: str) -> str:
         "User-Agent": "GitCourt/1.0",
     }
 
-    import os
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     if token:
         headers["Authorization"] = f"token {token}"

@@ -33,7 +33,7 @@ jobs:
           PR_URL="${{ github.event.pull_request.html_url }}"
           echo "⚖️ Running GitCourt on $PR_URL"
 
-          python -m gitcourt.gitcourt "$PR_URL" --json > verdict.json || true
+          python -m gitcourt "$PR_URL" --json > verdict.json || true
 
           # Extract score
           SCORE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('score',0))" 2>/dev/null || echo "0")

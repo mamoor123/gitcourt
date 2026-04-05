@@ -1,0 +1,126 @@
+name: "GitCourt — AI Code Review"
+description: "Three AI agents debate your PR. The Judge delivers the verdict."
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  github-token:
+    description: "GitHub token for posting comments"
+    required: false
+    default: ${{ github.token }}
+  openai-api-key:
+    description: "OpenAI API key"
+    required: true
+  provider:
+    description: "LLM provider: openai, anthropic, ollama"
+    required: false
+    default: "openai"
+  model:
+    description: "Model name (default: provider-specific)"
+    required: false
+    default: ""
+  pr-url:
+    description: "PR URL (default: current PR)"
+    required: false
+    default: ${{ github.event.pull_request.html_url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install GitCourt
+      shell: bash
+      run: pip install git+https://github.com/mamoor123/gitcourt.git
+
+    - name: Run GitCourt
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        python -m gitcourt.gitcourt "${{ inputs.pr-url }}" \
+          --provider "${{ inputs.provider }}" \
+          ${MODEL:+--model "$MODEL"} \
+          --json > verdict.json || true
+        env:
+          MODEL: ${{ inputs.model }}
+
+    - name: Build comment
+      shell: bash
+      run: |
+        python3 << 'SCRIPT'
+        import json, os
+
+        try:
+            with open('verdict.json') as f:
+                data = json.load(f)
+        except:
+            with open('comment.md', 'w') as f:
+                f.write("## ⚖️ GitCourt\n\n_GitCourt could not reach a verdict._\n")
+            exit(0)
+
+        v = data.get('verdict', {})
+        score = v.get('score', 0)
+        ruling = v.get('ruling', 'No ruling')
+        sentence = v.get('sentence', '')
+
+        if score >= 8: emoji, status = "✅", "APPROVED"
+        elif score >= 6: emoji, status = "🔧", "NEEDS WORK"
+        elif score >= 4: emoji, status = "⚠️", "CHANGES REQUESTED"
+        else: emoji, status = "❌", "REJECTED"
+
+        bar_filled = int(score * 4)
+        bar_empty = 40 - bar_filled
+        bar = "█" * bar_filled + "░" * bar_empty
+
+        lines = [f"## ⚖️ GitCourt Verdict — {emoji} {status} ({score}/10)\n"]
+        lines.append(f"> {ruling}\n")
+        lines.append(f"`[{bar}]` **{score}/10**\n")
+
+        prosecution = data.get('prosecution', '')
+        defense = data.get('defense', '')
+
+        if prosecution:
+            lines.append(f"<details><summary>🔴 The Prosecution</summary>\n\n{prosecution[:1500]}\n\n</details>\n")
+        if defense:
+            lines.append(f"<details><summary>🔵 The Defense</summary>\n\n{defense[:1500]}\n\n</details>\n")
+
+        if v.get('charges_upheld'):
+            lines.append("### Charges Upheld")
+            for c in v['charges_upheld']:
+                lines.append(f"- ❌ {c}")
+            lines.append("")
+
+        if v.get('required_changes'):
+            lines.append("### Required Before Merge")
+            for c in v['required_changes']:
+                lines.append(f"- 🔧 {c}")
+            lines.append("")
+
+        if v.get('suggestions'):
+            lines.append("### Suggestions")
+            for c in v['suggestions']:
+                lines.append(f"- 💡 {c}")
+            lines.append("")
+
+        if sentence:
+            lines.append(f"> _\"{sentence}\"_\n")
+
+        lines.append("---\n_🤖 Delivered by [GitCourt](https://github.com/mamoor123/gitcourt)_")
+
+        with open('comment.md', 'w') as f:
+            f.write("\n".join(lines))
+        SCRIPT
+
+    - name: Post verdict
+      if: always()
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: gitcourt
+        path: comment.md
+        GITHUB_TOKEN: ${{ inputs.github-token }}

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1b26"/>
+      <stop offset="100%" stop-color="#15161e"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Terminal window -->
+  <rect x="10" y="10" width="700" height="420" rx="12" fill="url(#bg)" filter="url(#shadow)" stroke="#333" stroke-width="1"/>
+
+  <!-- Title bar -->
+  <rect x="10" y="10" width="700" height="36" rx="12" fill="#24253a"/>
+  <rect x="10" y="34" width="700" height="12" fill="#24253a"/>
+  <circle cx="32" cy="28" r="6" fill="#ff5f57"/>
+  <circle cx="52" cy="28" r="6" fill="#febc2e"/>
+  <circle cx="72" cy="28" r="6" fill="#28c840"/>
+  <text x="360" y="32" text-anchor="middle" fill="#888" font-size="12">gitcourt — ⚖️ AI Code Review Tribunal</text>
+
+  <!-- Content -->
+  <text x="30" y="72" fill="#7aa2f7" font-size="11">$ gitcourt https://github.com/acme/api/pull/42</text>
+
+  <text x="30" y="100" fill="#565f89" font-size="10">📋 Fetching PR data... ✅</text>
+  <text x="30" y="116" fill="#565f89" font-size="10">════════════════════════════════════════════════════════════════</text>
+  <text x="30" y="132" fill="#e0af68" font-size="10" font-weight="bold">📋 CASE #42: Add JWT auth middleware</text>
+  <text x="30" y="146" fill="#565f89" font-size="10">Repo: acme/api | Author: @devguru | +142 -23 (3 files)</text>
+  <text x="30" y="162" fill="#565f89" font-size="10">════════════════════════════════════════════════════════════════</text>
+
+  <text x="30" y="186" fill="#565f89" font-size="10">⚖️  Court is in session...</text>
+
+  <!-- Prosecutor -->
+  <text x="30" y="210" fill="#f7768e" font-size="11" font-weight="bold">🔴 THE PROSECUTION</text>
+  <text x="30" y="228" fill="#c0caf5" font-size="10">  "The prosecution submits THREE serious violations..."</text>
+  <text x="30" y="244" fill="#f7768e" font-size="10">  🔴 Hardcoded JWT secret on line 47</text>
+  <text x="30" y="258" fill="#f7768e" font-size="10">  🟡 Missing rate limiting on auth endpoints</text>
+  <text x="30" y="272" fill="#9ece6a" font-size="10">  🟢 Minor: unused import on line 12</text>
+
+  <!-- Defender -->
+  <text x="30" y="296" fill="#7aa2f7" font-size="11" font-weight="bold">🔵 THE DEFENSE</text>
+  <text x="30" y="314" fill="#c0caf5" font-size="10">  "The defense acknowledges the passion but..."</text>
+  <text x="30" y="330" fill="#7aa2f7" font-size="10">  ✅ Secret is loaded from env in production</text>
+  <text x="30" y="344" fill="#7aa2f7" font-size="10">  ✅ Rate limiting is handled at the gateway</text>
+
+  <!-- Verdict -->
+  <text x="30" y="372" fill="#e0af68" font-size="11" font-weight="bold">🟡 THE VERDICT</text>
+  <text x="30" y="392" fill="#c0caf5" font-size="10">Score: 7/10</text>
+  <rect x="110" y="382" width="160" height="12" rx="2" fill="#1e2030"/>
+  <rect x="110" y="382" width="112" height="12" rx="2" fill="#9ece6a"/>
+  <text x="280" y="392" fill="#9ece6a" font-size="10" font-weight="bold">APPROVED ✅</text>
+
+  <text x="30" y="416" fill="#565f89" font-size="9">"This court finds the defendant competent. Fix the hardcoded</text>
+  <text x="30" y="428" fill="#565f89" font-size="9"> secret before merge. Case dismissed."</text>
+</svg>

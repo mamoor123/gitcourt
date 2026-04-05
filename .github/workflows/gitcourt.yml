@@ -1,0 +1,165 @@
+name: GitCourt — AI Code Review Tribunal
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  gitcourt:
+    runs-on: ubuntu-latest
+    name: ⚖️ GitCourt Review
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install GitCourt
+        run: |
+          pip install git+https://github.com/mamoor123/gitcourt.git
+
+      - name: Run GitCourt
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          echo "⚖️ Running GitCourt on $PR_URL"
+
+          python -m gitcourt.gitcourt "$PR_URL" --json > verdict.json || true
+
+          # Extract score
+          SCORE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('score',0))" 2>/dev/null || echo "0")
+          RULING=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('ruling','No verdict'))" 2>/dev/null || echo "GitCourt could not reach a verdict")
+          SENTENCE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('sentence',''))" 2>/dev/null || echo "")
+
+          # Build comment
+          if [ "$SCORE" -ge 8 ]; then
+            EMOJI="✅"
+            STATUS="APPROVED"
+            COLOR="green"
+          elif [ "$SCORE" -ge 6 ]; then
+            EMOJI="🔧"
+            STATUS="NEEDS WORK"
+            COLOR="yellow"
+          elif [ "$SCORE" -ge 4 ]; then
+            EMOJI="⚠️"
+            STATUS="CHANGES REQUESTED"
+            COLOR="orange"
+          else
+            EMOJI="❌"
+            STATUS="REJECTED"
+            COLOR="red"
+          fi
+
+          # Build charges sections
+          CHARGES_UPHELD=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          charges = v.get('verdict',{}).get('charges_upheld',[])
+          for c in charges: print(f'- ❌ {c}')
+          " 2>/dev/null || echo "")
+
+          CHARGES_DISMISSED=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          charges = v.get('verdict',{}).get('charges_dismissed',[])
+          for c in charges: print(f'- ✅ {c}')
+          " 2>/dev/null || echo "")
+
+          REQUIRED=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          items = v.get('verdict',{}).get('required_changes',[])
+          for i in items: print(f'- 🔧 {i}')
+          " 2>/dev/null || echo "")
+
+          SUGGESTIONS=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          items = v.get('verdict',{}).get('suggestions',[])
+          for i in items: print(f'- 💡 {i}')
+          " 2>/dev/null || echo "")
+
+          PRAISE=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          items = v.get('verdict',{}).get('praise',[])
+          for i in items: print(f'- 🌟 {i}')
+          " 2>/dev/null || echo "")
+
+          PROSECUTION=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          print(v.get('prosecution','N/A')[:1500])
+          " 2>/dev/null || echo "")
+
+          DEFENSE=$(python -c "
+          import json
+          v = json.load(open('verdict.json'))
+          print(v.get('defense','N/A')[:1500])
+          " 2>/dev/null || echo "")
+
+          # Create the comment
+          cat > comment.md << COMMENT_EOF
+          ## ⚖️ GitCourt Verdict — ${EMOJI} ${STATUS} (${SCORE}/10)
+
+          > ${RULING}
+
+          <details>
+          <summary>🔴 The Prosecution</summary>
+
+          ${PROSECUTION}
+
+          </details>
+
+          <details>
+          <summary>🔵 The Defense</summary>
+
+          ${DEFENSE}
+
+          </details>
+
+          ${CHARGES_UPHELD:+### Charges Upheld
+          ${CHARGES_UPHELD}
+          }
+
+          ${CHARGES_DISMISSED:+### Charges Dismissed
+          ${CHARGES_DISMISSED}
+          }
+
+          ${REQUIRED:+### Required Before Merge
+          ${REQUIRED}
+          }
+
+          ${SUGGESTIONS:+### Suggestions
+          ${SUGGESTIONS}
+          }
+
+          ${PRAISE:+### Commendations
+          ${PRAISE}
+          }
+
+          ${SENTENCE:+> _"${SENTENCE}"_}
+
+          ---
+          _🤖 Delivered by [GitCourt](https://github.com/mamoor123/gitcourt) — Three AI agents. One PR. Justice._
+          COMMENT_EOF
+
+          # Post comment to PR
+          echo "$PR_URL"
+
+      - name: Post verdict to PR
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: gitcourt
+          path: comment.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

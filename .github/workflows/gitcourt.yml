@@ -22,8 +22,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install GitCourt
-        run: |
-          pip install git+https://github.com/mamoor123/gitcourt.git
+        run: pip install "git+https://github.com/mamoor123/gitcourt.git#egg=gitcourt[all]"
 
       - name: Run GitCourt
         env:
@@ -35,31 +34,27 @@ jobs:
 
           python -m gitcourt "$PR_URL" --json > verdict.json || true
 
-          # Extract score
+          # Extract verdict fields
           SCORE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('score',0))" 2>/dev/null || echo "0")
           RULING=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('ruling','No verdict'))" 2>/dev/null || echo "GitCourt could not reach a verdict")
           SENTENCE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('sentence',''))" 2>/dev/null || echo "")
 
-          # Build comment
+          # Determine status
           if [ "$SCORE" -ge 8 ]; then
             EMOJI="✅"
             STATUS="APPROVED"
-            COLOR="green"
           elif [ "$SCORE" -ge 6 ]; then
             EMOJI="🔧"
             STATUS="NEEDS WORK"
-            COLOR="yellow"
           elif [ "$SCORE" -ge 4 ]; then
             EMOJI="⚠️"
             STATUS="CHANGES REQUESTED"
-            COLOR="orange"
           else
             EMOJI="❌"
             STATUS="REJECTED"
-            COLOR="red"
           fi
 
-          # Build charges sections
+          # Build sections from JSON
           CHARGES_UPHELD=$(python -c "
           import json
           v = json.load(open('verdict.json'))
@@ -107,54 +102,67 @@ jobs:
           print(v.get('defense','N/A')[:1500])
           " 2>/dev/null || echo "")
 
-          # Create the comment
-          cat > comment.md << COMMENT_EOF
-          ## ⚖️ GitCourt Verdict — ${EMOJI} ${STATUS} (${SCORE}/10)
+          # Build comment
+          {
+            echo "## ⚖️ GitCourt Verdict — ${EMOJI} ${STATUS} (${SCORE}/10)"
+            echo ""
+            echo "> ${RULING}"
+            echo ""
 
-          > ${RULING}
+            echo "<details>"
+            echo "<summary>🔴 The Prosecution</summary>"
+            echo ""
+            echo "${PROSECUTION}"
+            echo ""
+            echo "</details>"
+            echo ""
 
-          <details>
-          <summary>🔴 The Prosecution</summary>
+            echo "<details>"
+            echo "<summary>🔵 The Defense</summary>"
+            echo ""
+            echo "${DEFENSE}"
+            echo ""
+            echo "</details>"
+            echo ""
 
-          ${PROSECUTION}
+            if [ -n "$CHARGES_UPHELD" ]; then
+              echo "### Charges Upheld"
+              echo "${CHARGES_UPHELD}"
+              echo ""
+            fi
 
-          </details>
+            if [ -n "$CHARGES_DISMISSED" ]; then
+              echo "### Charges Dismissed"
+              echo "${CHARGES_DISMISSED}"
+              echo ""
+            fi
 
-          <details>
-          <summary>🔵 The Defense</summary>
+            if [ -n "$REQUIRED" ]; then
+              echo "### Required Before Merge"
+              echo "${REQUIRED}"
+              echo ""
+            fi
 
-          ${DEFENSE}
+            if [ -n "$SUGGESTIONS" ]; then
+              echo "### Suggestions"
+              echo "${SUGGESTIONS}"
+              echo ""
+            fi
 
-          </details>
+            if [ -n "$PRAISE" ]; then
+              echo "### Commendations"
+              echo "${PRAISE}"
+              echo ""
+            fi
 
-          ${CHARGES_UPHELD:+### Charges Upheld
-          ${CHARGES_UPHELD}
-          }
+            if [ -n "$SENTENCE" ]; then
+              echo "> _\"${SENTENCE}\"_"
+              echo ""
+            fi
 
-          ${CHARGES_DISMISSED:+### Charges Dismissed
-          ${CHARGES_DISMISSED}
-          }
-
-          ${REQUIRED:+### Required Before Merge
-          ${REQUIRED}
-          }
-
-          ${SUGGESTIONS:+### Suggestions
-          ${SUGGESTIONS}
-          }
-
-          ${PRAISE:+### Commendations
-          ${PRAISE}
-          }
-
-          ${SENTENCE:+> _"${SENTENCE}"_}
-
-          ---
-          _🤖 Delivered by [GitCourt](https://github.com/mamoor123/gitcourt) — Three AI agents. One PR. Justice._
-          COMMENT_EOF
-
-          # Post comment to PR
-          echo "$PR_URL"
+            echo "---"
+            echo "_🤖 Delivered by [GitCourt](https://github.com/mamoor123/gitcourt) — Three AI agents. One PR. Justice._"
+          } > comment.md
 
       - name: Post verdict to PR
         if: always()

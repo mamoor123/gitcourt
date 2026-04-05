@@ -10,8 +10,9 @@ inputs:
     required: false
     default: ${{ github.token }}
   openai-api-key:
-    description: "OpenAI API key"
-    required: true
+    description: "OpenAI API key (required for openai provider)"
+    required: false
+    default: ""
   provider:
     description: "LLM provider: openai, anthropic, ollama"
     required: false
@@ -35,18 +36,17 @@ runs:
 
     - name: Install GitCourt
       shell: bash
-      run: pip install git+https://github.com/mamoor123/gitcourt.git
+      run: pip install "git+https://github.com/mamoor123/gitcourt.git#egg=gitcourt[all]"
 
     - name: Run GitCourt
       shell: bash
       env:
         OPENAI_API_KEY: ${{ inputs.openai-api-key }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
-        MODEL: ${{ inputs.model }}
       run: |
         MODEL_FLAG=""
-        if [ -n "$MODEL" ]; then
-          MODEL_FLAG="--model $MODEL"
+        if [ -n "${{ inputs.model }}" ]; then
+          MODEL_FLAG="--model ${{ inputs.model }}"
         fi
         python -m gitcourt "${{ inputs.pr-url }}" \
           --provider "${{ inputs.provider }}" \
@@ -55,6 +55,7 @@ runs:
 
     - name: Build comment
       shell: bash
+      if: always()
       run: |
         python3 << 'SCRIPT'
         import json, os
@@ -62,13 +63,13 @@ runs:
         try:
             with open('verdict.json') as f:
                 data = json.load(f)
-        except:
+        except Exception:
             with open('comment.md', 'w') as f:
                 f.write("## ⚖️ GitCourt\n\n_GitCourt could not reach a verdict._\n")
-            exit(0)
+            raise SystemExit(0)
 
         v = data.get('verdict', {})
-        score = v.get('score', 0)
+        score = max(1, min(10, int(v.get('score', 0))))
         ruling = v.get('ruling', 'No ruling')
         sentence = v.get('sentence', '')
 
@@ -97,6 +98,12 @@ runs:
             lines.append("### Charges Upheld")
             for c in v['charges_upheld']:
                 lines.append(f"- ❌ {c}")
+            lines.append("")
+
+        if v.get('charges_dismissed'):
+            lines.append("### Charges Dismissed")
+            for c in v['charges_dismissed']:
+                lines.append(f"- ✅ {c}")
             lines.append("")
 
         if v.get('required_changes'):

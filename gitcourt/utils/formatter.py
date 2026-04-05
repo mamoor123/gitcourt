@@ -1,6 +1,5 @@
 """Terminal formatter — makes GitCourt output look amazing."""
 
-import sys
 import shutil
 
 
@@ -89,6 +88,7 @@ def print_agent_argument(role: str, emoji: str, argument: str):
 
 def print_score_bar(score: int):
     """Print a visual score bar from 1-10."""
+    score = max(1, min(10, int(score)))
     w = 40  # bar width
     filled = int((score / 10) * w)
     empty = w - filled

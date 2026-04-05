@@ -108,6 +108,7 @@ def call_llm(config: dict, system: str, user: str) -> str:
         client = openai.OpenAI(
             api_key=config["api_key"],
             base_url=config["base_url"],
+            timeout=120.0,
         )
         resp = client.chat.completions.create(
             model=config["model"],
@@ -121,7 +122,7 @@ def call_llm(config: dict, system: str, user: str) -> str:
 
     elif config["provider"] == "anthropic":
         import anthropic
-        client = anthropic.Anthropic(api_key=config["api_key"])
+        client = anthropic.Anthropic(api_key=config["api_key"], timeout=120.0)
         resp = client.messages.create(
             model=config["model"],
             max_tokens=4096,

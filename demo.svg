@@ -48,8 +48,8 @@
   <text x="30" y="372" fill="#e0af68" font-size="11" font-weight="bold">🟡 THE VERDICT</text>
   <text x="30" y="392" fill="#c0caf5" font-size="10">Score: 7/10</text>
   <rect x="110" y="382" width="160" height="12" rx="2" fill="#1e2030"/>
-  <rect x="110" y="382" width="112" height="12" rx="2" fill="#9ece6a"/>
-  <text x="280" y="392" fill="#9ece6a" font-size="10" font-weight="bold">APPROVED ✅</text>
+  <rect x="110" y="382" width="112" height="12" rx="2" fill="#e0af68"/>
+  <text x="280" y="392" fill="#e0af68" font-size="10" font-weight="bold">NEEDS WORK 🔧</text>
 
   <text x="30" y="416" fill="#565f89" font-size="9">"This court finds the defendant competent. Fix the hardcoded</text>
   <text x="30" y="428" fill="#565f89" font-size="9"> secret before merge. Case dismissed."</text>

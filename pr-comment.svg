@@ -45,8 +45,8 @@
   <!-- Score bar -->
   <text x="30" y="268" fill="#24292f" font-size="13" font-weight="600">Score: 7/10</text>
   <rect x="115" y="256" width="200" height="14" rx="3" fill="#e6e8eb"/>
-  <rect x="115" y="256" width="140" height="14" rx="3" fill="#2ea043"/>
-  <text x="325" y="268" fill="#2ea043" font-size="13" font-weight="600">APPROVED ✅</text>
+  <rect x="115" y="256" width="140" height="14" rx="3" fill="#d29922"/>
+  <text x="325" y="268" fill="#d29922" font-size="13" font-weight="600">NEEDS WORK 🔧</text>
 
   <line x1="20" y1="284" x2="600" y2="284" stroke="#d0d7de" stroke-width="1"/>
 

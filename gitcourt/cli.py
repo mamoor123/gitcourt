@@ -178,6 +178,10 @@ def main():
         print(f"\n❌ Failed to fetch PR: {e}")
         sys.exit(1)
 
+    if not pr_diff or not pr_diff.strip():
+        print("\n❌ PR has no diff (empty or no code changes). Nothing to review.")
+        sys.exit(1)
+
     if not args.json_output:
         print("✅")
         print_case_header(pr_info)

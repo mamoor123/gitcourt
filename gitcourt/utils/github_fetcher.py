@@ -97,7 +97,7 @@ def fetch_pr_diff(url: str) -> str:
     if token:
         headers["Authorization"] = f"token {token}"
 
-    resp = requests.get(api_url, headers=headers, timeout=60)
+    resp = requests.get(api_url, headers=headers, timeout=120)
 
     if resp.status_code == 404:
         raise ValueError(

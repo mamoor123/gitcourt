@@ -12,6 +12,7 @@ jobs:
   gitcourt:
     runs-on: ubuntu-latest
     name: ⚖️ GitCourt Review
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +36,7 @@ jobs:
           python -m gitcourt "$PR_URL" --json > verdict.json || true
 
           # Extract verdict fields
-          SCORE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('score',0))" 2>/dev/null || echo "0")
+          SCORE=$(python -c "import json; v=json.load(open('verdict.json')); print(int(v.get('verdict',{}).get('score',0)))" 2>/dev/null || echo "0")
           RULING=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('ruling','No verdict'))" 2>/dev/null || echo "GitCourt could not reach a verdict")
           SENTENCE=$(python -c "import json; v=json.load(open('verdict.json')); print(v.get('verdict',{}).get('sentence',''))" 2>/dev/null || echo "")
 
